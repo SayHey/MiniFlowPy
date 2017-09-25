@@ -7,11 +7,13 @@ the VM will time out :)
 
 import numpy as np
 from sklearn.datasets import load_boston
+from sklearn.datasets import load_breast_cancer
 from sklearn.utils import shuffle, resample
 from miniflow import *
 
 # Load data
-data = load_boston()
+data = load_breast_cancer()
+#data = load_boston()
 X_ = data['data']
 y_ = data['target']
 
@@ -33,7 +35,11 @@ W2, b2 = Input(), Input()
 l1 = Linear(X, W1, b1)
 s1 = Sigmoid(l1)
 l2 = Linear(s1, W2, b2)
-cost = MSE(y, l2)
+#cost = MSE(y, l2)
+
+# Log loss test on breast_cancer dataset
+s2 = Sigmoid(l2)
+cost = LogLoss(y, s2)
 
 feed_dict = {
     X: X_,
@@ -44,7 +50,7 @@ feed_dict = {
     b2: b2_
 }
 
-epochs = 10
+epochs = 100
 # Total number of examples
 m = X_.shape[0]
 batch_size = 11
@@ -76,3 +82,16 @@ for i in range(epochs):
         loss += graph[-1].value
 
     print("Epoch: {}, Loss: {:.3f}".format(i+1, loss/steps_per_epoch))
+
+
+# Step 5 - calculate training set accuracy
+
+X.value = X_
+y.value = y_
+
+forward_and_backward(graph)
+
+predictions = np.round(s2.value).reshape(-1)
+
+accuracy = 100* np.sum(predictions == y_) / y_.shape[0]
+print("Accuracy: {:.3f}%".format(accuracy))

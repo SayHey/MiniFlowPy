@@ -70,6 +70,7 @@ class Input(Node):
         for n in self.outbound_nodes:
             self.gradients[self] += n.gradients[self]
 
+
 class Linear(Node):
     """
     Represents a node that performs a linear transform.
@@ -182,6 +183,46 @@ class MSE(Node):
         self.gradients[self.inbound_nodes[0]] = (2 / self.m) * self.diff
         self.gradients[self.inbound_nodes[1]] = (-2 / self.m) * self.diff
 
+# Addad log loss
+class LogLoss(Node):
+    def __init__(self, y, a):
+        """
+        Log loss cost function.
+
+        Arguments:
+
+            `y`: data set labels
+            `a`: network predictions (y_hat in literature)
+        """
+        Node.__init__(self, [y, a])
+
+    def forward(self):
+        """
+        Calculates the log loss cost.
+
+        """
+        y = self.inbound_nodes[0].value.reshape(-1, 1)
+        a = self.inbound_nodes[1].value.reshape(-1, 1)
+
+         # Save the computed output for backward.
+        self.k = - 1 / self.inbound_nodes[0].value.shape[0]
+        self.y = y
+        self.a = a
+        self.inv_y = 1 - y
+        self.inv_a = 1 - a        
+        self.log_inv_a = np.log(self.inv_a)
+        self.log_a = np.log(a)
+
+        self.value = self.k * (np.dot(y.T, self.log_a) + np.dot(self.inv_y.T, self.log_inv_a))
+        self.value = np.asscalar(self.value);
+
+    def backward(self):
+        """
+        Calculates the gradient of the cost.
+        """
+        self.gradients[self.inbound_nodes[0]] = self.k * (self.log_a - self.log_inv_a)
+        self.gradients[self.inbound_nodes[1]] = self.k * (np.divide(self.y, self.a) - np.divide(self.inv_y, self.inv_a))
+      
 
 def topological_sort(feed_dict):
     """
