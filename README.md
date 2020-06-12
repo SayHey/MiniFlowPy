@@ -1,2 +1,2 @@
 # MiniFlow
-TensorFlow recreation on python based on Udacity CDND lab
+Computational graphs framework on Python based on Udacity CDND lab.
